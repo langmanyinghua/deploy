@@ -1,0 +1,5 @@
+[dag]
+name=Dag RPM Repository for Red Hat Enterprise Linux
+baseurl=http://193.1.193.67:80/redhat/el$releasever/en/$basearch/dag
+gpgcheck=0
+enabled=1

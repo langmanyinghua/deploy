@@ -1,0 +1,58 @@
+//-------------------------数据库结构优化 安装及相关操作 ------------------------------//
+	1、尽量减少数据冗余（并不是说不可以没有）
+
+
+
+//-------------------------慢查询优化 安装及相关操作 ------------------------------//
+	1、定位慢查询
+		show status; 查看用户数据库使用状态
+			show status like 'uptime';				//查询数据库的启动时间
+			show status like 'com_select'; 			//查询数据库执行了多少次查询
+			show status like 'com_update';			//查询数据库执行了多少次更新
+			show status like 'com_insert';			//查询数据库执行了多少次添加
+			show status like 'com_delete';			//查询数据库执行了多少次添加
+
+		show [session|global] status like 'xxx';(默认session 当前会话)
+
+		show status like 'Slow_queries';			//显示慢查询
+
+		show variables like 'long_query_time';		//查看慢查询规定的时间
+
+		set long_query_time = 1 					//设置慢查询的时间为1秒
+
+
+
+//-------------------------索引 安装及相关操作 ------------------------------//
+	1、索引类型
+		主键索引，全文索引，唯一索引，普通索引
+
+	2、添加索引
+		1、添加主键索引(主键自带索引) primary key(设置主键之后，就有索引了)
+			可以后期添加 alter table 表名 add primary key (列名)
+
+		2、添加普通索引
+			先创建表 然后创建索引
+			create index 索引名 on 表名 (列名)
+
+	3、查询索引
+		desc 表名(看不到索引名称)
+		show index from 表名\G 				// \G格式化
+
+
+	5、使用索引注意事项
+		1、
+		
+//-------------------------运维思路 及相关操作 ------------------------------//
+
+	1、max_allowed_packet
+		show VARIABLES like '%max_allowed_packet%';
+
+	解决方案 1、vim /etc/my.conf  写入 max_allowed_packet = 20M
+			 2、set global max_allowed_packet = 2*1024*1024*10
+
+	2、启动日志
+		set global general_log = ON;
+
+//-------------------------优化思路 及相关操作 ------------------------------//
+	1、观察服务器状态
+		

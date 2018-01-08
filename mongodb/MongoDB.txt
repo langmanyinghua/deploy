@@ -1,0 +1,38 @@
+
+//-------------------------MongoDB 安装 ------------------------------//
+	1、Windows的安装很简单
+		进入官网下载，然后傻瓜安装
+	2、Linux系统的安装
+		1、下载 wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.0.6.tgz 
+		2、解压 tar -zvxf xx.tgz
+		3、mv mongodb.3.6 /usr/local/mongodb
+		4、vim .base_profile 
+			PATH=/usr/lcoal/mongodb/bin:$PATH
+		5、source .base_profile
+
+
+//-------------------------MongoDB 启动 ------------------------------//
+	1、启动mongodb数据库服务（必须设置数据库路径）
+		mongod --dbpath xxx （centos 默认的数据库路径是 /data/db 需要自己创建路径 ）
+
+		mongod --dbpath xxx --fork 设置后台启动
+
+		// 设置日志
+		mongod --fork --dbpath=/usr/local/mongodb/data --logpath=/usr/local/mongodb/logs/mongodb2.log --logappend
+
+		mongod --rest web界面
+
+
+	2、停止
+		pkill mongod
+
+	3、 命令行连接MongoDB
+		mongo
+
+
+// ----------------------- 基本操作 ------------------------------//
+	1、show databases ; 显示数据库
+	2、use srobot ;		使用数据库
+	3、db.getCollectionNames();查看所有的表
+
+

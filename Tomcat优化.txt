@@ -1,0 +1,123 @@
+//-------------------------内存优化 安装及相关操作 ------------------------------//
+	1、
+		查看端口所在进程号
+		lsof -i:8080  如果没有lsof (yum -y install lsof)
+
+		jmap – heap 进程号  (查看是否生效)
+
+		JAVA_OPTS="-server -Xms2048m -Xmx2048m -Xmn512m -XX:PermSize=256M -XX:MaxPermSize=256m -Xss256k -XX:SurvivorRatio=4 -XX:MaxTenuringThreshold=20 -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=73 -XX:+UseCMSCompactAtFullCollection -XX:+CMSParallelRemarkEnabled -XX:CMSFullGCsBeforeCompaction=2 -Djava.awt.headless=true"
+
+		上面的配置是基于4G内存设置的，具体修改看自己手上服务器的配置。
+		参数的含义：
+		-server 告诉tomcat使用server模式 能获得更大并发数和性能
+		-Xms2048m -Xmx2048m JVM内存的总数
+		-Xmn512m 年轻代内存大小
+		-XX:PermSize=256M -XX:MaxPermSize=256m 永久带内存大小
+		Xss256k 线程大小
+		-XX:SurvivorRatio=4 设置年轻代中Eden区与Survivor区的大小比值。设置为4，则两个Survivor区与一个Eden区的比值为2:4，一个Survivor区占整个年轻代的1/6
+		-XX:MaxTenuringThreshold=20 设置垃圾最大年龄。如果设置为0的话，则年轻代对象不经过Survivor区，直接进入年老代。对于年老代比较多的应用，可以提高效率。如果将此值设置为 一个较大值，则年轻代对象会在Survivor区进行多次复制，这样可以增加对象再年轻代的存活时间，增加在年轻代即被回收的概率
+		-XX:+UseParNewGC 对年轻代采用多线程并行回收，这样收得快
+		XX:+UseConcMarkSweepGC
+		CMS gc，这一特性只有jdk1.5即后续版本才具有的功能，它使用的是gc估算触发和heap占用触发。
+		我们知道频频繁的GC会造面JVM的大起大落从而影响到系统的效率，因此使用了CMS GC后可以在GC次数增多的情况下，每次GC的响应时间却很短，比如说使用了CMS GC后经过jprofiler的观察，GC被触发次数非常多，而每次GC耗时仅为几毫秒
+		-XX:CMSInitiatingOccupancyFraction=73 说明年老代到73%满的时候开始执行对年老代的并发垃圾回收（CMS）。
+		-XX:+UseCMSCompactAtFullCollection 打开对年老代的压缩。可能会影响性能，但是可以消除碎片
+		-XX:+CMSParallelRemarkEnabled 降低标记停顿
+		-XX:CMSFullGCsBeforeCompaction 由于并发收集器不对内存空间进行压缩、整理，所以运行一段时间以后会产生“碎片”，使得运行效率降低。此值设置运行多少次GC以后对内存空间进行压缩、整理。
+
+
+//-------------------------并发优化 安装及相关操作 ------------------------------//
+	1、server.xml(调整连接器connector的并发处理能力)
+		　<Connector port="9027"
+		　　protocol="HTTP/1.1"
+		　　maxHttpHeaderSize="8192"
+		　　maxThreads="1000"					#客户请求最大线程数 
+		　　minSpareThreads="100"				#初始化时创建的 socket 线程数 
+		　　maxSpareThreads="1000"				#连接器的最大空闲 socket 线程数 
+		　　minProcessors="100"					#服务器创建时的最小处理线程数 
+		　　maxProcessors="1000"				#服务器同时最大处理线程数
+		　　enableLookups="false"				#若设为true, 则支持域名解析，可把 ip 地址解析为主机名
+		　　URIEncoding="utf-8"					#URL统一编码
+		　　acceptCount="1000"					#监听端口队列最大数，满了之后客户请求会被拒绝(大于maxSpareThreads) 
+		　　redirectPort="8443"					#在需要基于安全通道的场合，把客户请求转发到基于SSL的该端口
+		　　disableUploadTimeout="true"
+		/>
+
+//-------------------------缓存优化 安装及相关操作 ------------------------------//
+	1、
+		<Connector port="9027"
+		　　protocol="HTTP/1.1"
+		　　maxHttpHeaderSize="8192"
+		　　maxThreads="1000"
+		　　minSpareThreads="100"
+		　　maxSpareThreads="1000"
+		　　minProcessors="100"
+		　　maxProcessors="1000"
+		　　enableLookups="false"
+		　　compression="on"						#打开压缩功能 
+		　　compressionMinSize="2048"				#启用压缩的输出内容大小，这里面默认为2KB 
+		　　compressableMimeType="text/html,text/xml,text/javascript,text/css,text/plain"
+													#压缩类型 
+		　　connectionTimeout="20000"				#定义建立客户连接超时的时间. -1表示不限制建立客户连接的时间
+		　　URIEncoding="utf-8"
+		　　acceptCount="1000"
+		　　redirectPort="8443"
+		　　disableUploadTimeout="true"/>
+
+
+//-------------------------参考配置 安装及相关操作 ------------------------------//	
+	1、
+		<Connector port="9027"
+		　　protocol="HTTP/1.1"
+		　　maxHttpHeaderSize="8192"
+		　　maxThreads="1000"
+		　　minSpareThreads="25"
+		　　maxSpareThreads="75"
+		　　enableLookups="false"
+		　　compression="on"
+		　　compressionMinSize="2048"
+		　　compressableMimeType="text/html,text/xml,text/javascript,text/css,text/plain"
+		　　connectionTimeout="20000"
+		　　URIEncoding="utf-8"
+		　　acceptCount="200"
+		　　redirectPort="8443"
+		　　disableUploadTimeout="true" />
+
+	　后来发现在访问量达到3 百万多的时候出现性能瓶颈。 
+	2、
+		<Connector port="9027"
+		　　protocol="HTTP/1.1"
+		　　maxHttpHeaderSize="8192"
+		　　maxThreads="1000"
+		　　minSpareThreads="100"					#*
+		　　maxSpareThreads="1000"					#*
+		　　minProcessors="100"						#*
+		　　maxProcessors="1000"					#*
+		　　enableLookups="false"
+		　　compression="on"
+		　　compressionMinSize="2048"
+		　　compressableMimeType="text/html,text/xml,text/javascript,text/css,text/plain"
+		　　connectionTimeout="20000"
+		　　URIEncoding="utf-8"
+		　　acceptCount="1000"						#*
+		　　redirectPort="8443"	
+		　　disableUploadTimeout="true"/>
+
+//-------------------------tcomat8无法登陆后台问题 安装及相关操作 ------------------------------//	
+
+
+	修改conf/tomcat-users.xml
+	<role rolename="manager"/>
+
+	<role rolename="manager-gui"/>
+	<role rolename="admin"/>
+	<user username="user" password="password" roles="admin,manager,manager-gui"/>
+
+	同时还需要修改，如无新建conf/Catalina/localhost/manager.xml 内容如下：
+
+	<Context privileged="true" antiResourceLocking="false"
+	         docBase="${catalina.home}/webapps/manager">
+	    <Valve className="org.apache.catalina.valves.RemoteAddrValve" allow="^.*$" />
+	</Context>
+	无须重启tomcat即可生效。
+

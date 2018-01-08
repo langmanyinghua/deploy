@@ -1,0 +1,50 @@
+//-------------------------搭建环境 安装及相关操作 ------------------------------//
+	1.1 检查系统内核
+		Docker 运行在 CentOS 7 上，要求系统为64位、系统内核版本为 3.10 以上。
+		Docker 运行在 CentOS-6.5 或更高的版本的 CentOS 上，要求系统为64位、系统内核版本为 2.6.32-431 或者更高版本。
+		uname - r 查看内核
+
+	1.2 更新yum 版本
+		yum update -y
+
+	1.3 进入 
+			1、/etc/yum.repos.d （yum 源的路径）
+			2、创建文件 docker.repo
+			3、加入文件内容
+				[dockerrepo] 
+				name=Docker Repository 
+				baseurl=https://yum.dockerproject.org/repo/main/centos/$releasever/ 
+				enabled=1 
+				gpgcheck=1 
+				gpgkey=https://yum.dockerproject.org/gpg
+
+
+	1、4 安装 Docker
+		yum install -y docker-engine
+
+	1、5 检查是否安装成功 
+
+		docker version		默认没有启动 docker 执行命令 servicer docker start
+
+
+//-------------------------操作命令 安装及相关操作 ------------------------------//
+
+	1.1 
+		docker images 							查看镜像
+
+		docker run [-d(后台运行)]  xx			运行镜像
+
+		docker pull xx							下载镜像
+
+		docker ps 								查看当前运行的镜像
+
+		docker stop xx(镜像id)					停止镜像
+
+		docker exec -it xx(镜像id)	bash 		进入某个镜像
+
+		docker run - p 8080(主机):80(镜像) xxx	设置主机和镜像之前端口的映射
+
+		docker run - P xxx						选择随机端口映射
+
+
+ 	

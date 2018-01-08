@@ -1,0 +1,107 @@
+
+部署手册
+
+1、阿里云相关配置
+
+	1、ECS
+		1、阿里云服务器的购买，配置
+
+		2、安装JDK
+
+		3、数据库设置
+			修改相应程序中设置的数据库地址，用户名，密码 开启慢查询
+
+	2、OSS
+		1、APP，SRobot上传文件设置
+
+		2、后台上传文件路径设置
+
+		3、oss token
+
+	3、短信
+		系统默认使用阿里大于的短信服务商
+
+2、环信相关配置
+
+	后台系统
+
+	    ORGNAME = "1197170927115149";														// 企业的唯一标识
+	    APPNAME = "srobot";																	// 同一“企业”下“APP”唯一标识
+
+	    CLIENT_ID = "YXA6HDINwKNrEeeK_NmMrvyvCA";											// 获取client_id 的参数
+	    CLIENT_SECRET = "YXA6FtNIQFfIaPNuaRuPdFsFrg9wEVw"; 									// 获取client_secret 的参数    
+
+	APP端
+
+
+3、语音文件转换相关配置
+	
+
+	1、上传 converter.gz文件 
+		converter 基于gcc 和 ffmpeg 所以得先安装这两个插件
+	2、解压该文件 tar -zxvf converter.gz
+		最好测试通过 sh converter.sh  1501574190714.amr  mp3
+
+
+4、APP,SRobot端访问地址
+
+	推荐使用域名
+		购买相关域名，对阿里云服务器的ip 地址和域名进行绑定
+
+	1、修改APP端对外访问地址
+	2、修改SRobot端对外访问地址
+
+
+5、后台系统启动
+	1、启动
+		1、右击Application run
+		2、进入到项目目录，mvn spring-boot:run
+		3、进入到项目目录，mvn install ,编译完成之后会多出来一个jar 文件， java -jar xxx.jar
+			java -jar -Dserver.port=8088 xxx.jar 改变端口
+			java -jar xxx.jar --spring.profiles.active=prod		//指定配置文件
+
+	2、跳过单元测试
+		mvn clean package -Dmaven.test.skip=true
+
+
+	3、后台启动
+		nohup java -jar spring-boot-scheduler-1.0.0.jar &
+
+
+6、数据库相关
+	1、建立数据库
+	2、密码，权限
+	3、编码格式、慢查询
+		slow_query_log = ON
+		slow_query_log_file = /var/log/mysql_slow_querys.log
+		long_query_time = 3
+		log-queries-not-using-indexes
+		log-slow-admin-statements
+
+		character-set-server = utf8mb4
+
+		character-set-client-handshake = FALSE
+		character-set-server = utf8mb4
+		collation-server = utf8mb4_unicode_ci
+		init_connect='SET NAMES utf8mb4'
+	4、初始化数据
+
+	5、数据库备份
+		1、编写配置文件
+			1、在/home/backup 目录下添加srobot_backup.sh文件			
+				vim /home/backup/srobot_backup.sh
+			2、编辑
+				#!/bin/bash
+				mysqldump -uxxx -pxxx srobot > /home/backup/log/srobot_$(date +%Y%m%d_%H%M%S).sql
+			3、添加执行权限
+				chmod +x srobot_backup.sh
+		2、添加计划任务
+			crontab -e
+				*/1 * * * * /home/backup/srobot_backup.sh 			// 一分钟执行一次，测试使用
+				0 8 * * * 	xxx 									// 每天八点执行
+				
+
+
+7、视频截图
+	1、oss界面开通支持
+

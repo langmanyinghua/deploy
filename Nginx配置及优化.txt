@@ -1,0 +1,232 @@
+//-------------------------虚拟主机配置 安装及相关操作 ------------------------------//
+	1、worker_processes(工作的主进程)	
+		可以修改，一般最大设置为cup数*核数
+		worker_processes auto 设置为该主机的cpu数
+
+	2、Event
+		events {
+			multi_accept on;			#告诉nginx收到一个新连接通知后接受尽可能多的连接。
+		    worker_connections  10240;	#连接数（在我们优化参数后，可以达到65535 / 4的数量）
+		    use epoll; 					#选择系统最适合的轮询方法
+		}
+	3、http
+		http{					//http 服务器的主段			 
+		    sendfile       on;	#开启高效文件传输模式
+			tcp_nopush     on;	#开启防止网络阻塞
+			tcp_nodelay    on;	#开启防止网络阻塞
+		    charset UTF-8; 		#设置字符集
+			server{				//虚拟主机端
+				location{
+					
+				}
+			}
+			server{
+				location{
+
+				}
+			}
+		}
+	4、反向代理
+		location /test {
+			proxy_psss http://127.0.0.1:8080/test;
+		}
+	5、负载均衡
+		http {
+			upstream webserver {
+				ip_hash; #每个请求按访问ip的hash结果分配，这样每个访客固定访问一个后端服务器，可以解决session的问题
+				
+				server 127.0.0.1:8080 weight=1; #weight 默认为1.weight越大，负载的权重就越大。
+				server 127.0.0.1:8081 down;		#表示当前的server暂时不参与负载
+				server 127.0.0.1:8082 backup;	#其它所有的非backup机器down或者忙的时候，请求backup机器
+				server 127.0.0.1:8083 max_fails=2 #允许请求失败的次数默认为1.当超过最大次数时，返回proxy_next_upstream 模块定义的错误.
+				server 127.0.0.1:8084 fail_timeout=30s #max_fails次失败后，暂停的时间
+			}
+			server {
+				listen 80;
+				server_name locathost;
+				location /test { #访问127.0.0.1:8080 下的test 项目
+					proxy_pass http://webserver;					
+				}
+			}
+		}
+		
+
+//-------------------------日志管理 安装及相关操作 ------------------------------//
+	1、access_log
+		access_log /var/log/nginx/access.log;
+
+		date -s '2017-04-04 21:16:20' #设置时间
+		clock -w 					  #写入时间
+		date -d yesterday
+		date +%Y%m%d%H%M 201704042123
+
+	2、日志切割
+		1、runlog.sh
+			1、在 /etc/nginx下面创建 runlog.sh文件
+				vim /etc/nginx/runglog.sh
+
+				脚本内容如下(按月份切割日志)
+				LOGPATH=/var/log/nginx/test.access.log
+				BASEPATH=/root/log/nginx/$(date +%Y%m)
+
+				mkdir -p $BASEPATH
+
+				bak=$BASEPATH/$(date +%d%H%M).test.access.log
+
+				echo $bak
+
+				mv $LOGPATH $bak
+				touch $LOGPATH
+
+				kill -USR1 cat /var/run/nginx.pid
+
+		2、定时任务
+			编辑定时任务 crontab -e 
+			分  时日月周
+			*/1 * * * * sh /etc/nginx/runlog.sh
+		
+			很多时候，你没有办法重新启动crond，这个时候可以先killall crond 然后再crond restart就哦ok了。我就是这么干的。
+		
+			# crontab基本格式
+			# +---------------- minute  分钟(0 - 59)
+			# |  +------------- hour    小时(0 - 23)
+			# |  |  +---------- day     日期(1 - 31)
+			# |  |  |  +------- month   月份(1 - 12)
+			# |  |  |  |  +---- week    星期(0 - 7) (星期天=0 or 7)
+			# |  |  |  |  |
+			# *  *  *  *  *  要运行的命令
+
+			* 代表所有的取值范围内的数字
+			/ 代表每的意思,”/5″表示每5个单位
+			- 代表从某个数字到某个数字
+			, 分开几个离散的数字
+
+
+//-------------------------Location 正则表达式 安装及相关操作 ------------------------------//
+
+	1、正则表达式匹配
+		= 严格匹配。如果这个查询匹配，那么将停止搜索并立即处理此请求。
+		~ 区分大小写匹配(可用正则表达式)
+		~* 不区分大小写匹配(可用正则表达式)
+		!~和!~*分别为区分大小写不匹配及不区分大小写不匹配
+		^ 以什么开头的匹配
+		$ 以什么结尾的匹配
+		^~ 如果把这个前缀用于一个常规字符串,那么告诉nginx 如果路径匹配那么不测试正则表达式。
+		转义字符。可以转. * ?等
+
+	2、优先级
+		(location =) > (location 完整路径) > (location ^~ 路径) > (location ~,~* 正则顺序) > (location 部分起始路径) > (/)
+
+	3、实战应用
+		所以实际使用中，个人觉得至少有三个匹配规则定义，如下：
+		#直接匹配网站根，通过域名访问网站首页比较频繁，使用这个会加速处理，官网如是说。
+		#这里是直接转发给后端应用服务器了，也可以是一个静态首页
+		# 第一个必选规则
+		location = / {
+		    proxy_pass http://tomcat:8080/index
+		}
+		# 第二个必选规则是处理静态文件请求，这是nginx作为http服务器的强项
+		# 有两种配置模式，目录匹配或后缀匹配,任选其一或搭配使用
+		location ^~ /static/ {
+		    root /webroot/static/;
+		}
+		location ~* \.(gif|jpg|jpeg|png|css|js|ico)$ {
+		    root /webroot/res/;
+		}
+		#第三个规则就是通用规则，用来转发动态请求到后端应用服务器
+		#非静态文件请求就默认是动态请求，自己根据实际把握
+		#毕竟目前的一些框架的流行，带.php,.jsp后缀的情况很少了
+		location / {
+		    proxy_pass http://tomcat:8080/
+		}
+
+	Nginx 的 Location 正则表达式博大精深，不是一朝一夕能领悟，骚年，持之以恒的学习是你掌握它的唯一途径
+
+//-------------------------压缩处理命令 安装及相关操作 ------------------------------//
+	1、gzip
+		gzip on;								#开启Gzip
+		gzip_min_length 1k;						#不压缩临界值，大于1K的才压缩，一般不用改
+		gzip_buffers 4 16k;						#压缩有几块，每块多大
+		#gzip_http_version 1.0;					#压缩的http版本
+		gzip_comp_level 6;						#压缩级别（1到10） 越高越占cpu资源 推荐6
+		gzip_types text/plain application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png;		#压缩的文件格式类型
+		#图片文件不必做压缩，压缩率不高，反而影响效率
+		gzip_vary off;								
+		gzip_disable "MSIE [1-6]\.";			#支持ie
+
+	2、查看是否压缩成功
+		curl -I -H "Accept-Encoding: gzip, deflate" "http://192.168.31.193/test.html"
+
+//-------------------------缓存处理命令 安装及相关操作 ------------------------------//
+	1、缓存(expires)
+		location /img {
+			expires 1d;
+		}
+
+//-------------------------1W并发处理 安装及相关操作 ------------------------------//
+	优化思路大概有两个方向
+	1、建立Socket连接
+		1、系统层面
+			最大连接数
+				cat /proc/sys/net/core/somaxconn 查看最大连接数
+				echo 50000 > /proc/sys/net/core/somaxconn	最大值设置为50000 
+			快速回收
+				cat /proc/sys/net/ipv4/tcp_tw_recycle  查询是否快速回收 0 不回收 1 回收
+				echo 1 > /proc/sys/net/ipv4/tcp_tw_recycle 
+			重复利用
+				cat /proc/sys/net/ipv4/tcp_tw_reuse  查询是否重复利用 0 不利用 1 利用
+				echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse 
+			洪水攻击		
+				cat /proc/sys/net/ipv4/tcp_syncookies  查询是否做洪水抵御 0 不做 1 做
+				echo 0 > /proc/sys/net/ipv4/tcp_syncookies 		
+
+		2、Ningx层面
+			worker_processes 设置和CPU数一致
+
+			1、允许子进程打开的最大连接数 worker_connections 10240
+
+			2.http连接快速关闭(keep_alivetime 0;)//http请求完之后，马上断开连接
+
+
+	2、打开文件
+		1、系统层面
+			打开文件数
+			ulimit -n 查看当前的打开文件数
+			ulimit -n 50000 (设置一个较大的数，重启后会无效)
+			ulimit -a 查看是否可用
+			写入文件（重启后也会生效）
+			vi /etc/security/limits.conf 
+			* soft nofile 65535
+      		* hard nofile 65535
+		
+		2、Ningx层面
+			进程的打开的最大文件数(worker_rlimit_nofile 30000) 全局变量处
+
+
+//-------------------------ab测试工具 安装及相关操作 ------------------------------//
+	安装 yum install -y httpd-tools
+
+	1、ab测试工具 并发数为100 ，总访问次数为1000 访问链接为http://www.baidu.com
+
+	ab -c 100 -n 1000 http://www.baidu.com
+
+	Document Path:          /index.html  	// 文件位置
+	Document Length:        612 bytes		// 文件大小
+	
+	Concurrency Level:      100 			//并发请求数	
+	Time taken for tests:   0.242 seconds	//整个测试总时长
+	
+	Complete requests:      1000 			//完成测试数
+	Failed requests:        0 				//失败的请求
+	Write errors:           0 				//等待的请求
+	Total transferred:      876265 bytes	//所有的网络传输量
+	HTML transferred:       634644 bytes
+
+	Requests per second:    4126.77 [#/sec] (mean)			
+	//吞吐率
+	Time per request:       24.232 [ms] (mean)				
+	//用户平均请求等待时间
+	Time per request:       0.242 [ms] (mean, across all concurrent requests) 
+	//服务器平均请求处理时间，大家最关心的指标之三
+	Transfer rate:          3531.39 [Kbytes/sec] received
+	//平均每秒网络上的流量，可以帮助排除是否存在网络流量过大导致响应时间延长的问题
