@@ -106,12 +106,15 @@ INSERT INTO `t_sys_permission`(id,level,name,sort,url,is_available,parentid,pare
 INSERT INTO `t_sys_permission`(id,level,name,sort,url,is_available,parentid,parentids,resourcetype,permission) VALUES ('86', '3', '添加', '81', 'create', '1', '84', '2,84', 'MENU', 'create');
 INSERT INTO `t_sys_permission`(id,level,name,sort,url,is_available,parentid,parentids,resourcetype,permission) VALUES ('87', '3', '删除', '82', 'delete', '1', '84', '2,84', 'MENU', 'delete');
 INSERT INTO `t_sys_permission`(id,level,name,sort,url,is_available,parentid,parentids,resourcetype,permission) VALUES ('88', '3', '修改', '83', 'edit', '1', '84', '2,84', 'MENU', 'edit');
+INSERT INTO `t_sys_permission`(id,level,name,sort,url,is_available,parentid,parentids,resourcetype,permission) VALUES ('89', '1', '群组管理','36', 'groupChatManager', '1', '0', '', 'iconfont icon-qunzu', 'search');
+INSERT INTO `t_sys_permission`(id,level,name,sort,url,is_available,parentid,parentids,resourcetype,permission) VALUES ('90', '2', '群组','85', 'groupChatList', '1', '89', '89','MENU','search');
+INSERT INTO `t_sys_permission`(id,level,name,sort,url,is_available,parentid,parentids,resourcetype,permission) VALUES ('91', '3', '聊天记录','86', 'details', '1', '90', '89,90','MENU','details');
 
 -- ----------------------------
 -- 初始化角色
 -- ----------------------------
-INSERT INTO `t_sys_role`(id,role,is_available,roleids,type) VALUES ('1','管理员', '1', '1,2,9,12,13,14,15,16,17,18,19,20,22,23,24,25,27,29,30,31,32,33,34,35,37,38,39,41,42,43,44,45,46,47,48,49,50,51,52,53,55,56,57,58,59,60,61,62,63,64,65,66,68,69,70,71,72,73,74,75,76,77,78,79,80,', '0');
-INSERT INTO `t_sys_role`(id,role,is_available,roleids,type) VALUES ('2','店长', '1', '1,14,15,16,17,18,19,20,31,32,33,34,35,37,38,39,41,42,43,44,45,46,47,48,49,50,51,52,53,55,56,57,58,59,60,61,62,63,64,65,66,68,69,70,71,72,73,74,75,81,82,83,', '1');
+INSERT INTO `t_sys_role`(id,role,is_available,roleids,type) VALUES ('1','管理员', '1', '1,2,9,12,13,14,15,16,17,18,19,20,22,23,24,25,27,29,30,31,32,33,34,35,37,38,39,41,42,43,44,45,46,47,48,49,50,51,52,53,55,56,57,58,59,60,61,62,63,64,65,66,68,69,70,71,72,73,74,75,76,77,78,79,80,89,90,91', '0');
+INSERT INTO `t_sys_role`(id,role,is_available,roleids,type) VALUES ('2','店长', '1', '1,14,15,16,17,18,19,20,31,32,33,34,35,37,38,39,41,42,43,44,45,46,47,48,49,50,51,52,53,55,56,57,58,59,60,61,62,63,64,65,66,68,69,70,71,72,73,74,75,81,82,83,89,90,91', '1');
 
 -- ----------------------------
 -- 初始化权限关系
@@ -194,6 +197,9 @@ INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('333', '85', '5');
 INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('334', '86', '5');
 INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('335', '87', '1');
 INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('392', '88', '1');
+INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('393', '89', '1');
+INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('394', '90', '1');
+INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('395', '91', '1');
 INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('336', '1', '2');
 INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('337', '14', '2');
 INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('338', '15', '2');
@@ -250,13 +256,15 @@ INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('388', '84', '2');
 INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('389', '85', '2');
 INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('390', '86', '2');
 INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('391', '87', '2');
+INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('396', '89', '2');
+INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('397', '90', '2');
+INSERT INTO `t_sys_role_permission`(id,pid,rid) VALUES ('398', '91', '2');
 
 
 -- ----------------------------
 -- 初始化环信token
 -- ----------------------------
 INSERT INTO `t_easemob_token`(id,access_token,application,expires_in) VALUES (1, 'YWMtdAk8msKvEee1vPtQl6SIkwAAAAAAAAAAAAAAAAAAAAEcMg3Ao2sR54r82Yyu_K8IAgMAAAFfj7PT9wBPGgA_hewcjxfpO0_ajJQZ1sl3bjbCWDWJa-qv6Ru-XMX2Xw', '1c320dc0-a36b-11e7-8afc-d98caefcaf08', 1515128447548);
-
 
 -- ----------------------------
 -- 设置唯一索引
